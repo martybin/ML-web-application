@@ -1,5 +1,5 @@
 import os
-from src.pipeline import ModelTraining
+from pipeline import ModelTraining
 
 if __name__ == '__main__':
     file_path = 'xgbpipe.joblib'

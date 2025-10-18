@@ -1,5 +1,5 @@
-from src.utils import *
-from src.preprocessing import Preprocessing
+from utils import *
+from preprocessing import Preprocessing
 
 class ModelTraining:
     def __init__(self):

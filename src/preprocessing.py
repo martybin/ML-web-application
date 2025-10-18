@@ -1,10 +1,9 @@
-from src.utils import *
+from utils import *
 
 class Preprocessing(BaseEstimator, TransformerMixin):
     def __init__(self):
-        self.df = sns.load_dataset('titanic')
-        self.X = self.df.drop('Survived', axis=1)
-        self.y = self.df.Survived
+        self.path = os.path.join(os.path.dirname(__file__), '..', 'data', 'titanic.csv')
+        self.df = pd.read_csv(self.path)
 
     def fit(self, X, y=None):
         self.ageImputer = SimpleImputer()
@@ -12,10 +11,12 @@ class Preprocessing(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, y=None):
-
-        self.X['Age'] = self.ageImputer.transform(self.X[['Age']])
-        self.X['CabinClass'] = self.X['Cabin'].fillna('M').str.apply(lambda x: str(x).replace(' ', '')).apply(lambda x: re.sub(r'[^a-zA-Z]', '', x, regex=True))
-        self.X['CabinNumber'] = self.X['Cabin'].fillna('M').str.apply(lambda x: str(x).replace(' ', '')).apply(lambda x: re.sub(r'[^0-9]', '', x, regex=True)).replace('', 0)
-        self.X['Embarked'] = self.X['Embarked'].fillna('M')
-        self.X = self.X.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
-        return self.X
+        df = self.df.copy()
+        df['Age'] = self.ageImputer.transform(df[['Age']])
+        df['CabinClass'] = df['Cabin'].fillna('M').apply(lambda x: str(x).replace(' ', '')).apply(lambda x: re.sub(r'[^a-zA-Z]', '', x))
+        df['CabinNumber'] = df['Cabin'].fillna('M').apply(lambda x: str(x).replace(' ', '')).apply(lambda x: re.sub(r'[^0-9]', '', x)).replace('', 0)
+        df['Embarked'] = df['Embarked'].fillna('M')
+        df = df.drop(['PassengerId', 'Name', 'Ticket', 'Cabin'], axis=1)
+        X = df.drop('Survived', axis=1)
+        y = df['Survived']
+        return X, y
