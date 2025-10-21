@@ -1,11 +1,13 @@
-from utils import *
+from dependencies import *
 from preprocessing import Preprocessing
 
-class ModelTraining:
+class ModelTraining: 
     def __init__(self):
-        self.preprocessor = Preprocessing()
-        self.X = self.preprocessor.X
-        self.y = self.preprocessor.y
+        path = os.path.join(os.path.dirname(__file__), '..', 'data', 'titanic.csv')
+        df = pd.read_csv(path)
+        self.X = df.drop('Survived', axis=1)
+        self.y = df['Survived']
+        self.mlpipe = None
 
     def pipeline(self):
         numerical_pipeline = Pipeline([('scaler', StandardScaler())])
@@ -16,36 +18,33 @@ class ModelTraining:
         ])
         return transformer
 
-    def split_data(self):
-        return train_test_split(self.X, self.y, test_size=0.2, random_state=42)
-
-    def train_model(self):
-        X_train, X_test, y_train, y_test = self.split_data()
-        return X_train, X_test, y_train, y_test
-
     def mlpipeline(self):
-        pipe = self.pipeline()
-        X_train, X_test, y_train, y_test = self.train_model()
+        preprocessor = Preprocessing()
+        transformer = self.pipeline()
         mlpipe = Pipeline([
-            ('initial_preprocess', self.preprocessor),
-            ('transformer', pipe),
-            ('xgb', XGBClassifier()),
+            ('initial_preprocess', preprocessor),
+            ('transformer', transformer),
+            ('xgb', XGBClassifier(use_label_encoder=False, eval_metric='logloss'))
         ])
-        mlpipe.fit(X_train, y_train)
         return mlpipe
 
-    def predict_model(self):
-        X_train, X_test, y_train, y_test = self.train_model()
-        mlpipe = self.mlpipeline()
-        Y_hat = mlpipe.predict(X_test)
-        return Y_hat, y_test
-
-    def p_score(self):
-        yhat, y_test = self.predict_model()
+    def train_test_eval(self):
+        X_train, X_test, y_train, y_test = train_test_split(
+            self.X, self.y, test_size=0.2, random_state=42
+        )
+        self.mlpipe = self.mlpipeline()
+        self.mlpipe.fit(X_train, y_train)
+        yhat = self.mlpipe.predict(X_test)
         precision = precision_score(y_test, yhat)
-        return f'The precision score is: {precision:.3f}'
+        print(f'Precision: {precision:.3f}')
+        return self.mlpipe
 
     def save_pipeline(self, file_path='xgbpipe.joblib'):
-        mlpipe = self.mlpipeline()
-        joblib.dump(mlpipe, file_path)
-        return f'Pipeline saved as {file_path}'
+        if self.mlpipe is None:
+            print("Pipeline not trained yet. Training now...")
+            self.train_test_eval()
+
+        file_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', file_path))
+        joblib.dump(self.mlpipe, file_path)
+        print(f'Pipeline trained & saved at: {file_path}')
+        return file_path

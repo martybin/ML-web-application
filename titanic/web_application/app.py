@@ -1,12 +1,12 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 import numpy as np
 import pandas as pd
 import streamlit as st
 from utils import PreProcessor, column
-from src.load_data import load_pipeline
+from load_model import load_pipeline
 
 model = load_pipeline()
 st.title('Will you survive if you were among Titanic passengers or not? :ship:')
@@ -28,8 +28,8 @@ def predict():
     X = pd.DataFrame([row], columns=column)
     prediction = model.predict(X)
     if prediction[0] == 1:
-        st.success('Passenger Survived :thumbsub:')
+        st.success('Passenger Survived 👍')
     else:
-        st.error('Passenger did not Survive :thumbsdown:')
+        st.error('Passenger did not Survive 👎')
 
 trigger = st.button('Predict', on_click=predict)
